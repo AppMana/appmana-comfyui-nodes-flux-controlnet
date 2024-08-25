@@ -3,7 +3,7 @@ name = "comfyui-eesahesnodes"
 description = "InstantX's Flux union ControlNet loader and implementation"
 version = "1.0.0"
 license = {file = "LICENSE"}
-dependencies = ["diffusers>=0.30.0", "einops>=0.7.0"]
+dependencies = []
 
 [project.urls]
 Repository = "https://github.com/EeroHeikkinen/ComfyUI-eesahesNodes"
@@ -13,3 +13,18 @@ Repository = "https://github.com/EeroHeikkinen/ComfyUI-eesahesNodes"
 PublisherId = "eesahe"
 DisplayName = "ComfyUI-eesahesNodes"
 Icon = ""
+
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["comfyui_eesahesnodes"]
+package-dir = { "comfyui_eesahesnodes" = "." }
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.entry-points."comfyui.custom_nodes"]
+comfyui_eesahesnodes = "comfyui_eesahesnodes.nodes"
