@@ -6,13 +6,17 @@ import comfy.model_detection
 import comfy.model_management as mm
 import comfy.ops
 import comfy.utils
-from comfy.model_downloader import get_or_download, get_filename_list_with_downloadable, add_known_models
 from comfy.controlnet import ControlNet, controlnet_load_state_dict
+from comfy.model_downloader import get_or_download, get_filename_list_with_downloadable, add_known_models
 from comfy.model_downloader_types import HuggingFile
 from .controlnet.controlnet_instantx import InstantXControlNetFlux
 from .controlnet.controlnet_instantx_format2 import InstantXControlNetFluxFormat2
 
-add_known_models("controlnet",None, HuggingFile("InstantX/FLUX.1-dev-Controlnet-Union", "diffusion_pytorch_model.safetensors", save_with_filename="instantx-flux.1-dev-controlnet-union.safetensors"))
+add_known_models("controlnet", None,
+                 HuggingFile("InstantX/FLUX.1-dev-Controlnet-Union", "diffusion_pytorch_model.safetensors", save_with_filename="instantx-flux.1-dev-controlnet-union.safetensors"),
+                 HuggingFile("Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro", "diffusion_pytorch_model.safetensors", save_with_filename="shakker-labs-flux.1-dev-controlnet-union-pro.safetensors"),
+                 )
+
 
 def load_controlnet_flux_instantx(sd, controlnet_class, weight_dtype, full_path):
     keys_to_keep = [
@@ -69,13 +73,13 @@ def load_controlnet_flux_instantx(sd, controlnet_class, weight_dtype, full_path)
     return control
 
 
-def load_controlnet(full_path, weight_dtype):
+def load_controlnet_instantx_union(full_path, weight_dtype):
     controlnet_data = comfy.utils.load_torch_file(full_path, safe_load=True)
-    if "controlnet_mode_embedder.fc.weight" in controlnet_data:
-        return load_controlnet_flux_instantx(controlnet_data, InstantXControlNetFlux, weight_dtype, full_path)
     if "controlnet_mode_embedder.weight" in controlnet_data:
         return load_controlnet_flux_instantx(controlnet_data, InstantXControlNetFluxFormat2, weight_dtype, full_path)
-    assert False, f"Only InstantX union controlnet supported. Could not find key 'controlnet_mode_embedder.fc.weight' in {full_path}"
+    if "controlnet_mode_embedder.fc.weight" in controlnet_data:
+        return load_controlnet_flux_instantx(controlnet_data, InstantXControlNetFlux, weight_dtype, full_path)
+    raise AssertionError(f"Only InstantX union controlnet supported. Could not find key 'controlnet_mode_embedder.fc.weight' or 'controlnet_mode_embedder.weight' in {full_path}")
 
 
 INSTANTX_UNION_CONTROLNET_TYPES = {
@@ -106,7 +110,7 @@ class InstantXFluxUnionControlNetLoader:
 
     def load_controlnet(self, control_net_name, type, weight_dtype="default"):
         controlnet_path = get_or_download("controlnet", control_net_name)
-        controlnet = load_controlnet(controlnet_path, weight_dtype)
+        controlnet = load_controlnet_instantx_union(controlnet_path, weight_dtype)
 
         type_number = INSTANTX_UNION_CONTROLNET_TYPES.get(type, -1)
         controlnet.set_extra_arg("control_type", type_number)
